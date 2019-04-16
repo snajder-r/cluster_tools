@@ -15,18 +15,22 @@ class EdgeCostsWorkflow(WorkflowBase):
     output_key = luigi.Parameter()
     node_label_dict = luigi.DictParameter(default={})
     rf_path = luigi.Parameter(default='')
+    edge_classes = luigi.ListParameter(default=[1])
 
     def _costs_with_rf(self):
+        print("PREDICTING USING RF")
         predict_task = getattr(predict_tasks,
                                self._get_task_name('Predict'))
         t1 = predict_task(tmp_folder=self.tmp_folder,
                           max_jobs=self.max_jobs,
                           config_dir=self.config_dir,
                           rf_path=self.rf_path,
+                          edge_classes=self.edge_classes,
                           features_path=self.features_path,
                           features_key=self.features_key,
                           output_path=self.output_path,
-                          output_key=self.output_key,
+                          output_key="proba_pred",
+                          output_labels_key="label_pred",
                           dependency=self.dependency)
         transform_task = getattr(transform_tasks,
                                  self._get_task_name('ProbsToCosts'))
@@ -34,7 +38,7 @@ class EdgeCostsWorkflow(WorkflowBase):
                             max_jobs=self.max_jobs,
                             config_dir=self.config_dir,
                             input_path=self.output_path,
-                            input_key=self.output_key,
+                            input_key="proba_pred",
                             features_path=self.features_path,
                             features_key=self.features_key,
                             output_path=self.output_path,
@@ -44,6 +48,7 @@ class EdgeCostsWorkflow(WorkflowBase):
         return t2
 
     def _costs(self):
+        print("NO RF :-(")
         transform_task = getattr(transform_tasks,
                                  self._get_task_name('ProbsToCosts'))
         t1 = transform_task(tmp_folder=self.tmp_folder,

@@ -60,7 +60,7 @@ class WriteBase(luigi.Task):
         shape = vu.get_shape(self.input_path, self.input_key)
 
         # require output dataset
-        chunks = tuple(bs // 2 for bs in block_shape)
+        chunks = tuple(bs // 2 if bs % 2 == 0 else bs for bs in block_shape)
         chunks = tuple(min(ch, sh) for ch, sh in zip(chunks, shape))
         with vu.file_reader(self.output_path) as f:
             if self.output_key in f:

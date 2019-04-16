@@ -8,7 +8,7 @@ import luigi
 import numpy as np
 import vigra
 import nifty.tools as nt
-from nifty.filters import nonMaximumDistanceSuppression
+#from nifty.filters import nonMaximumDistanceSuppression
 
 import cluster_tools.utils.volume_utils as vu
 import cluster_tools.utils.function_utils as fu

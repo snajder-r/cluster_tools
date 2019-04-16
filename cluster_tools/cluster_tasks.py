@@ -604,7 +604,7 @@ class LSFTask(BaseClusterTask):
         pass
 
 
-class WorkflowBase(luigi.Task):
+class WorkflowBase(luigi.WrapperTask):
     """
     Base class for a workflow task, that just chains together
     a workflow of multiple tasks.

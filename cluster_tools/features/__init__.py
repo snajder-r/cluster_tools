@@ -1,1 +1,1 @@
-from .features_workflow import EdgeFeaturesWorkflow, RegionFeaturesWorkflow
+from .features_workflow import EdgeFeaturesWorkflow, RegionFeaturesWorkflow, EdgeFeaturesWorkflowWithRegionFeatures

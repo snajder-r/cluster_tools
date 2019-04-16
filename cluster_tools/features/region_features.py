@@ -30,8 +30,14 @@ class RegionFeaturesBase(luigi.Task):
     input_key = luigi.Parameter()
     labels_path = luigi.Parameter()
     labels_key = luigi.Parameter()
+    output_path = luigi.Parameter()
+    output_key = luigi.Parameter()
+    feature_list = luigi.ListParameter()
+    blockwise = luigi.Parameter(True)
     dependency = luigi.TaskParameter()
-
+    
+    
+    
     def requires(self):
         return self.dependency
 
@@ -52,26 +58,28 @@ class RegionFeaturesBase(luigi.Task):
         shebang, block_shape, roi_begin, roi_end = self.global_config_values()
         self.init(shebang)
 
+        if self.blockwise == False:
+            with vu.file_reader(self.input_path) as f_in:
+                block_shape = f_in[self.input_key].shape
+        
         # load the task config
         config = self.get_task_config()
 
-        # temporary output dataset
-        output_path = os.path.join(self.tmp_folder, 'region_features_tmp.n5')
-        output_key = 'block_feats'
-
+       
         # TODO make the scale at which we extract features accessible
         # update the config with input and output paths and keys
         # as well as block shape
         config.update({'input_path': self.input_path, 'input_key': self.input_key,
                        'labels_path': self.labels_path, 'labels_key': self.labels_key,
-                       'output_path': output_path, 'output_key': output_key,
-                       'block_shape': block_shape})
+                       'output_path': self.output_path, 'output_key': self.output_key,
+                       'block_shape': block_shape, 'feature_list': self.feature_list})
         # TODO support multi-channel
         shape = vu.get_shape(self.input_path, self.input_key)
 
         # require the temporary output data-set
-        f_out = z5py.File(output_path)
-        f_out.require_dataset(output_key, shape=shape, compression='gzip',
+        f_out = z5py.File(self.output_path)
+        
+        f_out.require_dataset(self.output_key, shape=shape, compression='gzip',
                               chunks=tuple(block_shape), dtype='float32')
 
         if self.n_retries == 0:
@@ -116,7 +124,7 @@ class RegionFeaturesLSF(RegionFeaturesBase, LSFTask):
 
 def _block_features(block_id, blocking,
                     ds_in, ds_labels, ds_out,
-                    ignore_label):
+                    ignore_label, feature_list):
     fu.log("start processing block %i" % block_id)
     block = blocking.getBlock(block_id)
     bb = vu.block_to_bb(block)
@@ -139,26 +147,51 @@ def _block_features(block_id, blocking,
     # TODO support more features
     # TODO we might want to check for overflows and in general allow vigra to
     # work with uint64s ...
+    
     labels = labels.astype('uint32')
-    feats = vigra.analysis.extractRegionFeatures(input_, labels, features=['mean', 'count'],
+    #print(vigra.analysis.supportedFeatures(input_))
+    feats = vigra.analysis.extractRegionFeatures(input_, labels, features=feature_list,
                                                  ignoreLabel=ignore_label)
-
-    counts = feats['count']
-    feats = feats['mean']
-
     # make serialization
+    num_features = len(feature_list) 
     ids = np.unique(labels)
-    data = np.zeros(3 * len(ids), dtype='float32')
-    # write the ids
-    data[::3] = ids.astype('float32')
-    # write the counts
-    data[1::3] = counts[ids]
-    # write the features
-    data[2::3] = feats[ids]
 
+    # Number of actual feature values, since some features (like Histogram) compute multiple values
+    num_feature_vals = 1 # start with 1 for ids
+    for i in range(0,num_features):
+        feature_vals = feats[feature_list[i]]
+        if(len(feature_vals.shape)==2):
+            num_feature_vals += feature_vals.shape[1]
+        else:
+            num_feature_vals+=1
+    
+    data = np.zeros((len(ids), num_feature_vals), dtype='float32')
+    # write the ids
+    data[:,0] = ids.astype('float32')
+
+    feature_indices = [''] * num_feature_vals
+
+    # write features
+    feature_i = 1
+    for i in range(num_features):
+        feature_vals = feats[feature_list[i]][ids]
+        if len(feature_vals.shape) == 2:
+            for j in range(feature_vals.shape[1]):
+                data[:,feature_i] = feature_vals[:,j]
+                feature_indices[feature_i] = feature_list[i]
+                feature_i+=1
+        else:
+            data[:,feature_i] = feature_vals
+            feature_indices[feature_i] = feature_list[i]
+            feature_i+=1
+
+    data = data.reshape((-1))
+    # z5py cant handle nan, so we need to replace it
+    data[np.isnan(data)] = 0 
     chunks = blocking.blockShape
     chunk_id = tuple(b.start // ch for b, ch in zip(bb, chunks))
     ds_out.write_chunk(chunk_id, data, True)
+    ds_out.attrs['feature_indices'] = feature_indices
     fu.log_block_success(block_id)
 
 
@@ -176,10 +209,12 @@ def region_features(job_id, config_path):
     input_key = config['input_key']
     labels_path = config['labels_path']
     labels_key = config['labels_key']
+    
     output_path = config['output_path']
     output_key = config['output_key']
     block_shape = config['block_shape']
     ignore_label = config['ignore_label']
+    feature_list = config['feature_list']
 
     with vu.file_reader(input_path) as f_in,\
             vu.file_reader(labels_path) as f_l,\
@@ -190,12 +225,14 @@ def region_features(job_id, config_path):
         ds_out = f_out[output_key]
 
         shape = ds_out.shape
+        
+        print('Block shape ', block_shape)
         blocking = nt.blocking([0, 0, 0], shape, block_shape)
 
         for block_id in block_list:
             _block_features(block_id, blocking,
                             ds_in, ds_labels, ds_out,
-                            ignore_label)
+                            ignore_label, feature_list)
 
     fu.log_job_success(job_id)
 

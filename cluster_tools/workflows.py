@@ -6,13 +6,15 @@ from .watershed import WatershedWorkflow
 from .graph import GraphWorkflow
 
 # TODO more features and options to choose which features to choose
-from .features import EdgeFeaturesWorkflow
+from .features import EdgeFeaturesWorkflow, EdgeFeaturesWorkflowWithRegionFeatures
+from .features import RegionFeaturesWorkflow
 from .costs import EdgeCostsWorkflow
 
 # TODO more options for lifted problems
 from .lifted_features import LiftedFeaturesFromNodeLabelsWorkflow
 
 from .multicut import MulticutWorkflow
+from .region_to_edge_features import R2EFeaturesWorkflow
 from .lifted_multicut import LiftedMulticutWorkflow
 
 from .debugging import CheckSubGraphsWorkflow
@@ -23,10 +25,14 @@ from .agglomerative_clustering import agglomerative_clustering as agglomerate_ta
 from .stitching import StitchingAssignmentsWorkflow
 
 
+from .classifyrf import ClassificationWorkflow
+
 # TODO add options to choose which features to use
 # NOTE in the current implementation, we can only compute the
 # graph with n_scales=1, otherwise we will clash with the multicut merged graphs
 class ProblemWorkflow(WorkflowBase):
+    img_path = luigi.Parameter()
+    img_key = luigi.Parameter()
     input_path = luigi.Parameter()
     input_key = luigi.Parameter()
     ws_path = luigi.Parameter()
@@ -35,17 +41,22 @@ class ProblemWorkflow(WorkflowBase):
 
     # optional params for costs
     rf_path = luigi.Parameter(default='')
+    edge_classes = luigi.ListParameter(default=[1])
     node_label_dict = luigi.DictParameter(default={})
-
+    region_features = luigi.ListParameter()
+    
     max_jobs_merge = luigi.IntParameter(default=1)
     # do we compte costs
     compute_costs = luigi.BoolParameter(default=True)
     # do we run sanity checks ?
     sanity_checks = luigi.BoolParameter(default=False)
+    
+    
 
     # hard-coded keys
     graph_key = 's0/graph'
     features_key = 'features'
+
     costs_key = 's0/costs'
 
     def requires(self):
@@ -71,20 +82,22 @@ class ProblemWorkflow(WorkflowBase):
                                          ws_key=self.ws_key,
                                          graph_block_prefix=graph_block_prefix,
                                          dependency=dep)
-        dep = EdgeFeaturesWorkflow(tmp_folder=self.tmp_folder,
-                                   max_jobs=self.max_jobs,
-                                   config_dir=self.config_dir,
-                                   target=self.target,
-                                   dependency=dep,
-                                   input_path=self.input_path,
-                                   input_key=self.input_key,
-                                   labels_path=self.ws_path,
-                                   labels_key=self.ws_key,
-                                   graph_path=self.problem_path,
-                                   graph_key=self.graph_key,
-                                   output_path=self.problem_path,
-                                   output_key=self.features_key,
-                                   max_jobs_merge=self.max_jobs_merge)
+        dep = EdgeFeaturesWorkflowWithRegionFeatures(tmp_folder=self.tmp_folder,
+                                             max_jobs=self.max_jobs,
+                                             config_dir=self.config_dir,
+                                             dependency=dep,
+                                             target=self.target,
+                                             input_path=self.img_path,
+                                             input_key=self.img_key,
+                                             probs_path=self.input_path,
+                                             probs_key=self.input_key,
+                                             labels_path=self.ws_path,
+                                             labels_key=self.ws_key,
+                                             graph_path=self.problem_path,
+                                             graph_key=self.graph_key,
+                                             output_path=self.problem_path,
+                                             output_key=self.features_key,
+                                             region_features=self.region_features)
         if self.compute_costs:
             dep = EdgeCostsWorkflow(tmp_folder=self.tmp_folder,
                                     max_jobs=self.max_jobs,
@@ -96,18 +109,22 @@ class ProblemWorkflow(WorkflowBase):
                                     output_path=self.problem_path,
                                     output_key=self.costs_key,
                                     node_label_dict=self.node_label_dict,
-                                    rf_path=self.rf_path)
+                                    rf_path=self.rf_path, 
+                                    edge_classes=self.edge_classes)
         return dep
 
     @staticmethod
     def get_config():
         config = {**GraphWorkflow.get_config(),
                   **EdgeFeaturesWorkflow.get_config(),
+                  **RegionFeaturesWorkflow.get_config(),
                   **EdgeCostsWorkflow.get_config()}
         return config
 
 
 class SegmentationWorkflowBase(WorkflowBase):
+    img_path = luigi.Parameter()
+    img_key = luigi.Parameter()
     input_path = luigi.Parameter()
     input_key = luigi.Parameter()
     # where to save the watersheds
@@ -126,6 +143,7 @@ class SegmentationWorkflowBase(WorkflowBase):
 
     # optional path for random forest used for cost computation
     rf_path = luigi.Parameter(default='')
+    edge_classes = luigi.ListParameter(default=[1])
     # node label dict: dictionary for additional node labels used in costs
     node_label_dict = luigi.DictParameter(default={})
 
@@ -137,6 +155,7 @@ class SegmentationWorkflowBase(WorkflowBase):
     agglomerate_ws = luigi.BoolParameter(default=False)
     # run some sanity checks for intermediate results
     sanity_checks = luigi.BoolParameter(default=False)
+    region_features = luigi.ListParameter()
 
     # hard-coded keys
     graph_key = 's0/graph'
@@ -167,11 +186,14 @@ class SegmentationWorkflowBase(WorkflowBase):
         dep = ProblemWorkflow(tmp_folder=self.tmp_folder, config_dir=self.config_dir,
                               max_jobs=self.max_jobs, target=self.target, dependency=dep,
                               input_path=self.input_path, input_key=self.input_key,
+                              img_path=self.img_path, img_key=self.img_key,
                               ws_path=self.ws_path, ws_key=self.ws_key,
                               problem_path=self.problem_path, rf_path=self.rf_path,
+                              edge_classes=self.edge_classes,
                               node_label_dict=self.node_label_dict,
                               max_jobs_merge=self.max_jobs_merge,
-                              compute_costs=compute_costs, sanity_checks=self.sanity_checks)
+                              compute_costs=compute_costs, sanity_checks=self.sanity_checks,
+                              region_features=self.region_features)
         return dep
 
     def _write_tasks(self, dep, identifier):
@@ -228,6 +250,55 @@ class MulticutSegmentationWorkflow(SegmentationWorkflowBase):
         config.update(MulticutWorkflow.get_config())
         return config
 
+class MulticutSegmentationWithDoubleEdgesWorkflow(SegmentationWorkflowBase):
+    # number of jobs used for sub multicuts
+    max_jobs_multicut = luigi.IntParameter(default=1)
+    # number of scales
+    n_scales = luigi.IntParameter()
+    double_edge_path = luigi.Parameter()
+
+    
+    def _double_edge_prediction_task(self,dep):
+        dep = ClassificationWorkflow(tmp_folder=self.tmp_folder,
+                               max_jobs=self.max_jobs_multicut,
+                               config_dir=self.config_dir,
+                               target=self.target,
+                               rf_path=self.rf_path, 
+                               features_path=self.problem_path,
+                               features_key=self.features_key,
+                               output_path=self.double_edge_path,
+                               output_key='labels',
+                               dependency=dep)
+        return dep
+    
+    def _multicut_tasks(self, dep):
+        dep = MulticutWorkflow(tmp_folder=self.tmp_folder,
+                               max_jobs=self.max_jobs_multicut,
+                               config_dir=self.config_dir,
+                               target=self.target,
+                               dependency=dep,
+                               problem_path=self.problem_path,
+                               n_scales=self.n_scales,
+                               assignment_path=self.output_path,
+                               assignment_key=self.node_labels_key)
+        return dep
+    
+    def requires(self):
+        dep = self._watershed_tasks()
+        dep = self._problem_tasks(dep, compute_costs=True)
+        dep = self._multicut_tasks(dep)
+        dep = self._write_tasks(dep, 'multicut')
+        dep = self._double_edge_prediction_task(dep)
+        
+        return dep
+
+    
+    @staticmethod
+    def get_config():
+        config = super(MulticutSegmentationWithDoubleEdgesWorkflow, MulticutSegmentationWithDoubleEdgesWorkflow).get_config()
+        config.update(MulticutWorkflow.get_config())
+        return config
+        
 
 class LiftedMulticutSegmentationWorkflow(SegmentationWorkflowBase):
     # number of jobs used for sub multicuts

@@ -1,4 +1,5 @@
 from .workflows import MulticutSegmentationWorkflow
+from .workflows import MulticutSegmentationWithDoubleEdgesWorkflow
 from .workflows import LiftedMulticutSegmentationWorkflow
 from .workflows import AgglomerativeClusteringWorkflow
 from .workflows import SimpleStitchingWorkflow

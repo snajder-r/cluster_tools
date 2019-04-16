@@ -38,6 +38,7 @@ class ProbsToCostsBase(luigi.Task):
     output_key = luigi.Parameter()
     features_path = luigi.Parameter()
     features_key = luigi.Parameter()
+    edge_classes = luigi.ListParameter(default=[1])
     dependency = luigi.TaskParameter()
     node_label_dict = luigi.DictParameter(default={})
 
@@ -75,7 +76,8 @@ class ProbsToCostsBase(luigi.Task):
         # as well as block shape
         config.update({'input_path': self.input_path, 'input_key': self.input_key,
                        'output_path': self.output_path, 'output_key': self.output_key,
-                       'features_path': self.features_path, 'features_key': self.features_key})
+                       'features_path': self.features_path, 'features_key': self.features_key,
+                       'edge_classes': self.edge_classes})
 
         # check if we have additional node labels and update the config accordingly
         if self.node_label_dict:
@@ -178,6 +180,7 @@ def probs_to_costs(job_id, config_path):
     output_key = config['output_key']
     features_path = config['features_path']
     features_key = config['features_key']
+    edge_classes = config['edge_classes']
     # config for cost transformations
     invert_inputs = config.get('invert_inputs', False)
     transform_to_costs = config.get('transform_to_costs', True)
