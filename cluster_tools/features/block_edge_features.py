@@ -30,6 +30,7 @@ class BlockEdgeFeaturesBase(luigi.Task):
     labels_key = luigi.Parameter()
     graph_path = luigi.Parameter()
     output_path = luigi.Parameter()
+    blocks_prefix = luigi.Parameter(default='blocks')
     dependency = luigi.TaskParameter()
 
     def requires(self):
@@ -57,7 +58,7 @@ class BlockEdgeFeaturesBase(luigi.Task):
 
         # require output group
         with vu.file_reader(self.output_path) as f:
-            f.require_group('blocks')
+            f.require_group(self.blocks_prefix)
 
         # TODO make the scale at which we extract features accessible
         # update the config with input and output paths and keys
@@ -65,6 +66,7 @@ class BlockEdgeFeaturesBase(luigi.Task):
         config.update({'input_path': self.input_path, 'input_key': self.input_key,
                        'labels_path': self.labels_path, 'labels_key': self.labels_key,
                        'output_path': self.output_path, 'block_shape': block_shape,
+                       'blocks_prefix': self.blocks_prefix,
                        'graph_block_prefix': os.path.join(self.graph_path, 's0',
                                                           'sub_graphs', 'block_')})
 
@@ -114,13 +116,13 @@ class BlockEdgeFeaturesLSF(BlockEdgeFeaturesBase, LSFTask):
 def _accumulate(input_path, input_key,
                 labels_path, labels_key,
                 output_path, block_list,
-                graph_block_prefix, offsets):
+                graph_block_prefix, blocks_prefix, offsets):
 
     fu.log("accumulate features without applying filters")
     with vu.file_reader(input_path, 'r') as f:
         dtype = f[input_key].dtype
         input_dim = f[input_key].ndim
-    out_prefix = os.path.join(output_path, 'blocks')
+    out_prefix = os.path.join(output_path, blocks_prefix)
     if offsets is None:
         assert input_dim == 3, str(input_dim)
         fu.log('accumulate boundary map for type %s' % str(dtype))
@@ -165,7 +167,7 @@ def _accumulate_filter(input_, graph, labels, bb_local,
 
 def _accumulate_block(block_id, blocking,
                       ds_in, ds_labels,
-                      out_prefix, graph_block_prefix,
+                      out_prefix, graph_block_prefix,blocks_prefix,
                       filters, sigmas, halo, ignore_label,
                       apply_in_2d, channel_agglomeration):
 
@@ -236,7 +238,7 @@ def _accumulate_block(block_id, blocking,
 
 def _accumulate_with_filters(input_path, input_key,
                              labels_path, labels_key,
-                             output_path, graph_block_prefix,
+                             output_path, graph_block_prefix,blocks_prefix,
                              block_list, block_shape,
                              filters, sigmas, halo,
                              apply_in_2d, channel_agglomeration):
@@ -251,7 +253,7 @@ def _accumulate_with_filters(input_path, input_key,
         if input_dim == 4:
             shape = shape[1:]
 
-    out_prefix = os.path.join(output_path, 'blocks', 'block_')
+    out_prefix = os.path.join(output_path, blocks_prefix, 'block_')
     blocking = nt.blocking([0, 0, 0], list(shape),
                            list(block_shape))
 
@@ -263,9 +265,10 @@ def _accumulate_with_filters(input_path, input_key,
         ds_in = f[input_key]
         ds_labels = f_l[labels_key]
         for block_id in block_list:
+            fu.log("Ignore label: %s" % str(ignore_label))
             _accumulate_block(block_id, blocking,
                               ds_in, ds_labels,
-                              out_prefix, graph_block_prefix,
+                              out_prefix, graph_block_prefix, blocks_prefix,
                               filters, sigmas, halo, ignore_label,
                               apply_in_2d, channel_agglomeration)
 
@@ -286,6 +289,7 @@ def block_edge_features(job_id, config_path):
     labels_key = config['labels_key']
     output_path = config['output_path']
     block_shape = config['block_shape']
+    blocks_prefix = config['blocks_prefix']
     graph_block_prefix = config['graph_block_prefix']
 
     # offsets for accumulation of affinity maps
@@ -301,13 +305,14 @@ def block_edge_features(job_id, config_path):
         _accumulate(input_path, input_key,
                     labels_path, labels_key,
                     output_path, block_list,
-                    graph_block_prefix, offsets)
+                    graph_block_prefix, blocks_prefix, offsets)
     else:
         assert offsets is None, "Filters and offsets are not supported"
         assert sigmas is not None, "Need sigma values"
         _accumulate_with_filters(input_path, input_key,
                                  labels_path, labels_key,
                                  output_path, graph_block_prefix,
+                                 blocks_prefix,
                                  block_list, block_shape,
                                  filters, sigmas, halo,
                                  apply_in_2d, channel_agglomeration)

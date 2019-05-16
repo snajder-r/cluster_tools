@@ -30,6 +30,7 @@ class MergeEdgeFeaturesBase(luigi.Task):
     graph_key = luigi.Parameter()
     output_path = luigi.Parameter()
     output_key = luigi.Parameter()
+    blocks_prefix = luigi.Parameter(default='blocks')
     dependency = luigi.TaskParameter()
 
     def requires(self):
@@ -39,7 +40,7 @@ class MergeEdgeFeaturesBase(luigi.Task):
         n_feats = None
         with vu.file_reader(self.output_path) as f:
             for block_id in block_ids:
-                block_key = os.path.join('blocks', 'block_%i' % block_id)
+                block_key = os.path.join(self.blocks_prefix, 'block_%i' % block_id)
                 block_path = os.path.join(self.output_path, block_key)
                 if not os.path.exists(block_path):
                     continue
@@ -84,7 +85,7 @@ class MergeEdgeFeaturesBase(luigi.Task):
 
         # update the task config
         # TODO make scale we extract features at accessible
-        feat_block_prefix = os.path.join(self.output_path, 'blocks', 'block_')
+        feat_block_prefix = os.path.join(self.output_path, self.blocks_prefix, 'block_')
         config.update({'graph_block_prefix': os.path.join(self.graph_path, 's0',
                                                           'sub_graphs', 'block_'),
                        'feature_block_prefix': feat_block_prefix,

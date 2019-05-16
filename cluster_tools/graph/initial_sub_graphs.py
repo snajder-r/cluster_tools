@@ -29,6 +29,7 @@ class InitialSubGraphsBase(luigi.Task):
     input_path = luigi.Parameter()
     input_key = luigi.Parameter()
     graph_path = luigi.Parameter()
+    ignore_label = luigi.BoolParameter(default=True)
     #
     dependency = luigi.TaskParameter()
 
@@ -57,7 +58,8 @@ class InitialSubGraphsBase(luigi.Task):
         # update the config with input and graph paths and keys
         # as well as block shape
         config.update({'input_path': self.input_path, 'input_key': self.input_key,
-                       'graph_path': self.graph_path, 'block_shape': block_shape})
+                       'graph_path': self.graph_path, 'block_shape': block_shape,
+                       'ignore_label': self.ignore_label})
 
         # make graph file and write shape as attribute
         shape = vu.get_shape(self.input_path, self.input_key)

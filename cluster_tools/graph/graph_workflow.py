@@ -13,6 +13,7 @@ class GraphWorkflow(WorkflowBase):
     input_key = luigi.Parameter()
     graph_path = luigi.Parameter()
     output_key = luigi.Parameter()
+    ignore_label = luigi.BoolParameter(default=True)
     n_scales = luigi.IntParameter(default=1)
 
     # for now we only support n5 / zarr input labels
@@ -32,7 +33,8 @@ class GraphWorkflow(WorkflowBase):
                           input_path=self.input_path,
                           input_key=self.input_key,
                           graph_path=self.graph_path,
-                          dependency=self.dependency)
+                          dependency=self.dependency,
+                          ignore_label=self.ignore_label)
         merge_task = getattr(merge_tasks,
                              self._get_task_name('MergeSubGraphs'))
         t_prev = t1

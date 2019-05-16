@@ -12,8 +12,8 @@ class R2EFeaturesWorkflow(WorkflowBase):
     graph_key = luigi.Parameter()
     region_feature_paths = luigi.ListParameter()
     region_feature_keys = luigi.ListParameter()
-    edge_feature_path = luigi.Parameter()
-    edge_feature_key = luigi.Parameter()
+    edge_feature_paths = luigi.ListParameter()
+    edge_feature_keys = luigi.ListParameter()
     output_path = luigi.Parameter()
     output_key = luigi.Parameter()
     
@@ -37,8 +37,8 @@ class R2EFeaturesWorkflow(WorkflowBase):
                              graph_key=self.graph_key,
                              region_feature_paths=self.region_feature_paths,
                              region_feature_keys=self.region_feature_keys,
-                             edge_feature_path=self.edge_feature_path,
-                             edge_feature_key=self.edge_feature_key,
+                             edge_feature_paths=self.edge_feature_paths,
+                             edge_feature_keys=self.edge_feature_keys,
                              output_path=self.output_path,
                              output_key=self.output_key,
                              dependency=self.dependency)

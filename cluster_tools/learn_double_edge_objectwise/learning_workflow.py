@@ -5,13 +5,14 @@ import luigi
 import cluster_tools.utils.volume_utils as vu
 from ..cluster_tasks import WorkflowBase
 # TODO Region features
-from ..features import EdgeFeaturesWorkflow, EdgeFeaturesWorkflowWithRegionFeatures
+from ..features import EdgeFeaturesWorkflow, EdgeFeaturesWorkflowWithRegionFeatures, RegionFeaturesWorkflow
 from ..graph import GraphWorkflow
 from ..node_labels import NodeLabelWorkflow
 from . import edge_labels_mc as label_tasks_mc
-from . import edge_labels_de as label_tasks_de
+from . import node_labels_de as label_tasks_de
 from . import conseq_labels as conseq_labels
 from . import learn_rf as learn_tasks
+from . import merge_features as merge_tasks
 
 
 def read_number_of_labels(path):
@@ -182,32 +183,69 @@ class LearningWorkflowPreparationTaskDE(WorkflowBase):
 
             features_out = os.path.join(tmp_folder, 'features_gt.n5')
             
-            feat_task = EdgeFeaturesWorkflowWithRegionFeatures(tmp_folder=tmp_folder,
-                                             max_jobs=self.max_jobs,
-                                             config_dir=self.config_dir,
-                                             dependency=graph_task,
-                                             target=self.target,
-                                             input_paths=input_path[0],
-                                             input_keys=input_path[1],
-                                             probs_path=probs_path[0],
-                                             probs_key=probs_path[1],
-                                             labels_path=gt_path[0],
-                                             labels_key=gt_path[1],
-                                             graph_path=graph_out,
-                                             graph_key=graph_key,
-                                             output_path=features_out,
-                                             output_key='features',
-                                             number_of_labels=number_of_labels,
-                                             region_features=self.region_features,
-                                             use_edge_features=False)
+            membrane_features = RegionFeaturesWorkflow(tmp_folder=tmp_folder,
+                       max_jobs=self.max_jobs,
+                       config_dir=self.config_dir,
+                       target=self.target,
+                       dependency=graph_task,
+                       input_path=input_path[0][0],
+                       input_key=input_path[1][0],
+                       labels_path=gt_path[0],
+                       labels_key=gt_path[1],
+                       output_path=features_out,
+                       output_key='features_membranes',
+                       feature_list=self.region_features,
+                       number_of_labels=-1,
+                       blockwise=False)
+
+            nuclei_features = RegionFeaturesWorkflow(tmp_folder=tmp_folder,
+                       max_jobs=self.max_jobs,
+                       config_dir=self.config_dir,
+                       target=self.target,
+                       dependency=membrane_features,
+                       input_path=input_path[0][1],
+                       input_key=input_path[1][1],
+                       labels_path=gt_path[0],
+                       labels_key=gt_path[1],
+                       output_path=features_out,
+                       output_key='features_nuclei',
+                       feature_list=self.region_features,
+                       number_of_labels=-1,
+                       blockwise=False)
+
+            probs_features = RegionFeaturesWorkflow(tmp_folder=tmp_folder,
+                       max_jobs=self.max_jobs,
+                       config_dir=self.config_dir,
+                       target=self.target,
+                       dependency=nuclei_features,
+                       input_path=probs_path[0],
+                       input_key=probs_path[1],
+                       labels_path=gt_path[0],
+                       labels_key=gt_path[1],
+                       output_path=features_out,
+                       output_key='features_probs',
+                       feature_list=self.region_features,
+                       number_of_labels=-1,
+                       blockwise=False)
+
+            mt = getattr(merge_tasks, self._get_task_name('MergeRegionFeatures'))
+            merge_task = mt(tmp_folder=tmp_folder,
+                            max_jobs=self.max_jobs,
+                            config_dir=self.config_dir,
+                            dependency=probs_features,
+                            feature_path=features_out,
+                            feature_keys=['features_membranes', 'features_nuclei', 'features_probs'],
+                            feature_list=self.region_features,
+                            output_key='features')
+
 
             double_edges_out = os.path.join(tmp_folder, 'edge_labels.n5')
             lt = getattr(label_tasks_de,
-                         self._get_task_name('EdgeLabels'))
+                         self._get_task_name('NodeSemanticLabels'))
             label_task = lt(tmp_folder=tmp_folder,
                             max_jobs=self.max_jobs,
                             config_dir=self.config_dir,
-                            dependency=feat_task,
+                            dependency=merge_task,
                             graph_path=graph_out,
                             graph_key=graph_key,
                             semantic_node_labels_path=gt_sem_path[0],
@@ -217,7 +255,9 @@ class LearningWorkflowPreparationTaskDE(WorkflowBase):
                             gt_node_labels_path=gt_path[0],
                             gt_node_labels_key=gt_path[1],
                             output_path=double_edges_out,
-                            output_key='double_edges')
+                            output_key='semantic_label')
+
+
             yield label_task
             
 
@@ -260,7 +300,7 @@ class LearningWorkflow(WorkflowBase):
             features_dict_de[key] = (os.path.join(tmp_folder, 'features_gt.n5'), 'features')
             edge_labels_out = os.path.join(tmp_folder, 'edge_labels.n5')
             edge_labels_dict_mc[key] = (edge_labels_out, 'edge_labels')
-            edge_labels_dict_de[key] = (edge_labels_out, 'double_edges')
+            edge_labels_dict_de[key] = (edge_labels_out, 'semantic_label')
 
         f_task_mc = LearningWorkflowPreparationTaskMC(input_dict=self.input_dict,
                                                       probs_dict=self.probs_dict, 

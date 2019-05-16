@@ -42,7 +42,7 @@ class MergeRegionFeaturesBase(luigi.Task):
 
         # load the task config
         config = self.get_task_config()
-        chunk_size = min(10000, self.number_of_labels)
+        
 
         # Number of actual feature values, since some features (like Histogram) compute multiple values
         num_features = len(self.feature_list)
@@ -55,23 +55,20 @@ class MergeRegionFeaturesBase(luigi.Task):
             else:
                 num_feature_vals+=1
             
-        
-        # require the output dataset
-        with vu.file_reader(self.output_path) as f:
-            f.require_dataset(self.output_key, dtype='float32', shape=(self.number_of_labels * num_feature_vals,),
-                              chunks=(chunk_size,), compression='gzip')
-
-
-
         # update the task config
         config.update({'output_path': self.output_path, 'output_key': self.output_key,
                        'tmp_path': self.block_features_path, 'tmp_key': self.block_features_key,
-                       'node_chunk_size': chunk_size, 'feature_list': self.feature_list, 
+                       'feature_list': self.feature_list, 
                        'num_feature_vals':num_feature_vals})
 
-        node_block_list = vu.blocks_in_volume([self.number_of_labels], [chunk_size])
+        if self.number_of_labels != -1:
+            chunk_size = min(10000, self.number_of_labels)
+            node_block_list = vu.blocks_in_volume([self.number_of_labels], [chunk_size])
+            n_jobs = min(len(node_block_list), self.max_jobs)
+        else:
+            node_block_list = None
+            n_jobs = 1
 
-        n_jobs = min(len(node_block_list), self.max_jobs)
         # prime and run the jobs
         self.prepare_jobs(n_jobs, node_block_list, config, consecutive_blocks=True)
         self.submit_jobs(n_jobs)
@@ -192,6 +189,11 @@ def _extract_single_block_region_features(ds_in, ds, node_begin, node_end, featu
     ds[:] = out_features
     ds.attrs['feature_indices'] = ds_in.attrs['feature_indices'][1:]
 
+
+def read_number_of_labels(labels_path, labels_key):
+    with vu.file_reader(labels_path, 'r') as f:
+        n_labels = f[labels_key].attrs['maxId'] + 1
+    return int(n_labels)
     
 def merge_region_features(job_id, config_path):
     fu.log("start processing job %i" % job_id)
@@ -204,30 +206,35 @@ def merge_region_features(job_id, config_path):
     output_key = config['output_key']
     tmp_path = config['tmp_path']
     tmp_key = config['tmp_key']
-    node_block_list = config['block_list']
-    node_chunk_size = config['node_chunk_size']
     feature_list = config['feature_list']
     num_feature_vals = config['num_feature_vals']
+
+    number_of_labels = read_number_of_labels(tmp_path, tmp_key)
+
+    # require the output dataset
+    node_chunk_size = min(10000, number_of_labels)
 
     with vu.file_reader(output_path) as f,\
             vu.file_reader(tmp_path) as f_in:
 
+        f.require_dataset(output_key, dtype='float32', shape=(number_of_labels * num_feature_vals,),
+                           chunks=(node_chunk_size,), compression='gzip')
         ds_in = f_in[tmp_key]
         ds = f[output_key]
         ds.attrs['num_features'] = num_feature_vals
         n_nodes = ds.shape[0]
-
-        node_blocking = nt.blocking([0], [n_nodes], [node_chunk_size])
-        node_begin = node_blocking.getBlock(node_block_list[0]).begin[0]
-        node_end = node_blocking.getBlock(node_block_list[-1]).end[0]
 
         shape = list(ds_in.shape)
         chunks = list(ds_in.chunks)
         blocking = nt.blocking([0, 0, 0], shape, chunks)
 
         if blocking.numberOfBlocks == 1:
-            _extract_single_block_region_features(ds_in, ds, node_begin, node_end, feature_list, num_feature_vals)
+            _extract_single_block_region_features(ds_in, ds, 0, number_of_labels, feature_list, num_feature_vals)
         else:
+            node_block_list = config['block_list']
+            node_blocking = nt.blocking([0], [n_nodes], [node_chunk_size])
+            node_begin = node_blocking.getBlock(node_block_list[0]).begin[0]
+            node_end = node_blocking.getBlock(node_block_list[-1]).end[0]
             _extract_and_merge_region_features(blocking, ds_in, ds, node_begin, node_end, feature_list,num_feature_vals)
 
     fu.log_job_success(job_id)

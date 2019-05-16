@@ -142,12 +142,21 @@ def predict(job_id, config_path):
     feat_roi = np.s_[edge_begin:edge_end, :]
     with vu.file_reader(features_path) as f:
         ds = f[features_key]
+        print("Features: ")
+        print(ds.attrs['feature_colnames'])
         ds.n_threads = n_threads
         feats = ds[feat_roi]
 
     prediction = rf.predict_proba(feats)
-    probs = prediction[:, edge_classes].sum(axis=1).astype('float32')
-    labels = prediction.argmax(axis=1).astype('uint32')
+
+    if len(prediction.shape) == 1:
+        probs = prediction.astype('float32')
+        labels = (probs>0.5).astype('uint32')
+    else:
+        probs = prediction[:, edge_classes].sum(axis=1).astype('float32')
+        labels = prediction.argmax(axis=1).astype('uint32')
+        
+
     with vu.file_reader(output_path) as f:
         ds = f[output_key]
         ds.n_threads = n_threads

@@ -31,8 +31,8 @@ class R2EFeaturesBase(luigi.Task):
     graph_key = luigi.Parameter()
     region_feature_paths = luigi.ListParameter()
     region_feature_keys = luigi.ListParameter()
-    edge_feature_path = luigi.Parameter()
-    edge_feature_key = luigi.Parameter()
+    edge_feature_paths = luigi.ListParameter(default=None)
+    edge_feature_keys = luigi.ListParameter(default=None)
     output_path = luigi.Parameter()
     output_key = luigi.Parameter()
     dependency = luigi.TaskParameter()
@@ -60,8 +60,8 @@ class R2EFeaturesBase(luigi.Task):
                        'graph_key': self.graph_key,
                        'region_feature_paths': self.region_feature_paths,
                        'region_feature_keys': self.region_feature_keys,
-                       'edge_feature_path': self.edge_feature_path,
-                       'edge_feature_key': self.edge_feature_key,
+                       'edge_feature_paths': self.edge_feature_paths,
+                       'edge_feature_keys': self.edge_feature_keys,
                        'output_path': self.output_path,
                        'output_key': self.output_key})
 
@@ -109,8 +109,8 @@ def r2f_features(job_id, config_path):
     graph_key = config['graph_key']
     region_feature_paths = config['region_feature_paths']
     region_feature_keys = config['region_feature_keys']
-    edge_feature_path = config['edge_feature_path']
-    edge_feature_key = config['edge_feature_key']
+    edge_feature_paths = config['edge_feature_paths']
+    edge_feature_keys = config['edge_feature_keys']
     output_path = config['output_path']
     output_key = config['output_key']
 
@@ -122,15 +122,29 @@ def r2f_features(job_id, config_path):
     num_nodes = len(node_ids)
     num_edges = uv_ids.shape[0]
     
-    fu.log("reading edge features from %s%s" % (edge_feature_path,edge_feature_key))
+    fu.log("reading edge features from %s%s" % (edge_feature_paths,edge_feature_keys))
+
+    
     num_total_features = 0
-    with vu.file_reader(edge_feature_path, 'r') as f:
-        edge_features = f[edge_feature_key][:]
-        num_edge_features = edge_features.shape[1]
-        num_total_features += num_edge_features
+
+    feature_colnames = []
+
+    count = None
+    edge_features_list = []
+    if len(edge_feature_paths)>0:
+        num_total_features = 1
+        for ef_set_i in range(len(edge_feature_paths)):
+            edge_feature_path = edge_feature_paths[ef_set_i]
+            edge_feature_key = edge_feature_keys[ef_set_i]
+            with vu.file_reader(edge_feature_path, 'r') as f:
+                edge_features = f[edge_feature_key][:]
+                edge_features_list.append(edge_features)
+                num_edge_features = edge_features.shape[1]-1
+                num_total_features += num_edge_features
+            feature_colnames = feature_colnames + (['EF'] * (num_edge_features))
+            count = edge_features[:,-1]
 
     region_features = []
-    feature_colnames = ['EF'] * (num_edge_features-1)
     
     for rf_set_i in range(len(region_feature_paths)):
         region_feature_path = region_feature_paths[rf_set_i]
@@ -156,27 +170,42 @@ def r2f_features(job_id, config_path):
             
             num_total_features += num_region_features * 3
             
-    feature_colnames.append('EF')
+    if len(edge_feature_paths)>0:
+        feature_colnames.append('EF')
     fu.log("writing output to %s:%s" % (output_path, output_key))
     # require the output dataset
     with vu.file_reader(output_path) as f:
         ds = f.require_dataset(output_key, dtype='float32', shape=(num_edges, num_total_features), compression='gzip')
-        # Edge features
-        # Note that edge size must remain last feature, so we remove it for now and add it later
-        total_i = num_edge_features-1
-        ds[:,0:total_i] = edge_features[:,:-1]
+
+        total_i=0
+        if len(edge_feature_paths)>0:
+            for edge_features in edge_features_list:
+                # Edge features
+                # Note that edge size must remain last feature, so we remove it for now and add it later
+                num_edge_features = edge_features.shape[1]-1
+                print("Adding edge features at ", total_i, " namely ", num_edge_features)
+                ds[:,total_i:(total_i + num_edge_features)] = edge_features[:,:-1]
+                total_i += num_edge_features
             
+        print("Region features start at ", total_i)
         # Region features
         for rf in region_features:
             num_region_features = rf.shape[1]
+            print("Adding region features at ", total_i, " namely ", num_region_features)
             ds[:,total_i:(total_i+num_region_features)] = rf
             total_i+=num_region_features
 
-        assert total_i == (ds.shape[1]-1)
-        # Now write edge size
-        ds[:,-1] = edge_features[:,-1]
+
+        print("Now at ", total_i," from ", ds.shape[1])
+        if not count is None:
+            assert total_i == (ds.shape[1]-1)
+            # Now write edge size
+            ds[:,-1] = count
+        else:
+            assert total_i == (ds.shape[1])
 
         ds.attrs['feature_colnames'] = feature_colnames
+
     fu.log_job_success(job_id)
 
 

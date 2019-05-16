@@ -46,7 +46,7 @@ class RegionFeaturesBase(luigi.Task):
     def default_task_config():
         # we use this to get also get the common default config
         config = LocalTask.default_task_config()
-        config.update({'ignore_label': 0})
+        config.update({'ignore_label': None})
         return config
 
     def clean_up_for_retry(self, block_list):
@@ -79,6 +79,7 @@ class RegionFeaturesBase(luigi.Task):
         # require the temporary output data-set
         f_out = z5py.File(self.output_path)
         
+
         f_out.require_dataset(self.output_key, shape=shape, compression='gzip',
                               chunks=tuple(block_shape), dtype='float32')
 
@@ -216,6 +217,8 @@ def region_features(job_id, config_path):
     ignore_label = config['ignore_label']
     feature_list = config['feature_list']
 
+
+
     with vu.file_reader(input_path) as f_in,\
             vu.file_reader(labels_path) as f_l,\
             vu.file_reader(output_path) as f_out:
@@ -223,6 +226,11 @@ def region_features(job_id, config_path):
         ds_in = f_in[input_key]
         ds_labels = f_l[labels_key]
         ds_out = f_out[output_key]
+
+        if 'maxId' in ds_labels.attrs.keys():
+            ds_out.attrs['maxId'] = ds_labels.attrs['maxId']
+        else:
+            ds_out.attrs['maxId'] = int(ds_labels[:].max())
 
         shape = ds_out.shape
         
