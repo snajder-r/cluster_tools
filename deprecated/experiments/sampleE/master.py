@@ -7,7 +7,7 @@ EXECUTABLE = '/groups/saalfeld/home/papec/Work/software/conda/miniconda3/envs/pr
 
 # TODO minfiltering with on-the fly initial mask
 def make_minfilter_scripts(path, n_jobs, chunks, filter_shape, block_shape):
-    from cluster_tools.minfilter import make_batch_jobs
+    from ...minfilter import make_batch_jobs
     make_batch_jobs(path, 'masks/initial_mask',
                     path, 'masks/minfilter_mask',
                     chunks, filter_shape,
@@ -20,7 +20,7 @@ def make_minfilter_scripts(path, n_jobs, chunks, filter_shape, block_shape):
 
 
 def make_ws_scripts(path, aff_path, n_jobs, block_shape, tmp_dir):
-    from cluster_tools.masked_watershed import make_batch_jobs
+    from ...masked_watershed import make_batch_jobs
     chunks = [bs // 2 for bs in block_shape]
     # chunks = block_shape
     make_batch_jobs(aff_path, 'predictions/affs_glia',
@@ -34,7 +34,7 @@ def make_ws_scripts(path, aff_path, n_jobs, block_shape, tmp_dir):
 
 
 def make_relabel_scripts(path, n_jobs, block_shape, tmp_dir):
-    from cluster_tools.relabel import make_batch_jobs
+    from ...relabel import make_batch_jobs
     make_batch_jobs(path, 'segmentations/watershed_glia2',
                     os.path.join(tmp_dir, 'tmp_files', 'tmp_relabel'),
                     block_shape, n_jobs,
@@ -45,7 +45,7 @@ def make_relabel_scripts(path, n_jobs, block_shape, tmp_dir):
 
 # TODO the graph merging should get more threads, if possible 32
 def make_graph_scripts(path, n_scales, n_jobs, n_threads, block_shape, tmp_dir):
-    from cluster_tools.graph import make_batch_jobs
+    from ...graph import make_batch_jobs
     make_batch_jobs(path, 'segmentations/watershed_glia2',
                     os.path.join(tmp_dir, 'tmp_files', 'graph.n5'),
                     os.path.join(tmp_dir, 'tmp_files', 'tmp_graph'),
@@ -58,7 +58,7 @@ def make_graph_scripts(path, n_scales, n_jobs, n_threads, block_shape, tmp_dir):
 
 
 def make_feature_scripts(path, aff_path, n_jobs1, n_jobs2, n_threads, block_shape, tmp_dir):
-    from cluster_tools.features import make_batch_jobs
+    from ...features import make_batch_jobs
     make_batch_jobs(os.path.join(tmp_dir, 'tmp_files', 'graph.n5'), 'graph',
                     os.path.join(tmp_dir, 'tmp_files', 'features.n5'), 'features',
                     aff_path, 'predictions/affs_glia',
@@ -73,7 +73,7 @@ def make_feature_scripts(path, aff_path, n_jobs1, n_jobs2, n_threads, block_shap
 
 
 def make_cost_scripts(path, n_jobs, n_threads, tmp_dir):
-    from cluster_tools.costs import make_batch_jobs
+    from ...costs import make_batch_jobs
     rf_path = ''
     make_batch_jobs(os.path.join(tmp_dir, 'tmp_files', 'features.n5'), 'features',
                     os.path.join(tmp_dir, 'tmp_files', 'graph.n5'), 'graph',
@@ -88,7 +88,7 @@ def make_cost_scripts(path, n_jobs, n_threads, tmp_dir):
 
 
 def make_multicut_scripts(path, n_scales, n_jobs, n_threads, block_shape, tmp_dir):
-    from cluster_tools.multicut import make_batch_jobs
+    from ...multicut import make_batch_jobs
     make_batch_jobs(os.path.join(tmp_dir, 'tmp_files', 'graph.n5'), 'graph',
                     os.path.join(tmp_dir, 'tmp_files', 'tmp_mc', 'merged_graph.n5', 's0'), 'costs',
                     path, 'node_labelings/multicut_glia',
@@ -102,7 +102,7 @@ def make_multicut_scripts(path, n_scales, n_jobs, n_threads, block_shape, tmp_di
 
 
 def make_projection_scripts(path, n_jobs, block_shape, tmp_dir):
-    from cluster_tools.label_projection import make_batch_jobs
+    from ...label_projection import make_batch_jobs
     chunks = [bs // 2 for bs in block_shape]
     # chunks = block_shape
     make_batch_jobs(path, 'segmentations/watershed_glia2',

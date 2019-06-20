@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../..')
-from cluster_tools.watershed import make_batch_jobs
+from ...watershed import make_batch_jobs
 
 AFF_PATH = '/home/papec/Work/neurodata_hdd/ntwrk_papec/cluster_test_data/affs.n5'
 KEY_XY = 'affs_xy'

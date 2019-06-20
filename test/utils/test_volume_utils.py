@@ -6,10 +6,10 @@ from shutil import rmtree
 import numpy as np
 
 try:
-    import cluster_tools
+    from .. import
 except ImportError:
     sys.path.append('../..')
-    import cluster_tools
+    from .. import
 
 
 class TestVolumeUtil(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestVolumeUtil(unittest.TestCase):
             pass
 
     def test_file_reader(self):
-        from cluster_tools.utils.volume_utils import file_reader
+        from ...utils.volume_utils import file_reader
 
         def _test_io(f):
             data = np.random.rand(100, 100)
@@ -52,7 +52,7 @@ class TestVolumeUtil(unittest.TestCase):
             _test_io(f)
 
     def test_interpol_volume(self):
-        from cluster_tools.utils.volume_utils import InterpolatedVolume
+        from ...utils.volume_utils import InterpolatedVolume
         big_shape = (100, 1000, 1000)
         small_shape = (10, 100, 100)
         vol = np.random.rand(*small_shape)

@@ -10,12 +10,12 @@ import z5py
 from sklearn.metrics import adjusted_rand_score
 
 try:
-    from cluster_tools.mutex_watershed import MwsWorkflow
-    from cluster_tools.utils import segmentation_utils as su
+    from ...mutex_watershed import MwsWorkflow
+    from ...utils import segmentation_utils as su
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.mutex_watershed import MwsWorkflow
-    from cluster_tools.utils import segmentation_utils as su
+    from ...mutex_watershed import MwsWorkflow
+    from ...utils import segmentation_utils as su
 
 
 class TestMws(unittest.TestCase):

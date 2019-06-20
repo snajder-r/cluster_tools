@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../..')
-from cluster_tools.label_projection import make_batch_jobs
+from ...label_projection import make_batch_jobs
 
 PATH = '/groups/saalfeld/home/papec/Work/neurodata_hdd/cluster_test_data/testdata1.n5'
 

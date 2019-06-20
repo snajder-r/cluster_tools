@@ -125,13 +125,10 @@ def grow_regions(job_id, config_path):
     edge_labels_u = de_labels[edges[:,0]]  
     edge_labels_v = de_labels[edges[:,1]]
 
+    # Class 0 is fluid cavity, class 2 is background, class 1 is cell
     double_edges = np.logical_or(np.logical_and(edge_labels_u == 0, edge_labels_v == 2), np.logical_and(edge_labels_u == 2, edge_labels_v == 0))
 
     double_edges = edges[double_edges,:]
-
-
-
-    #double_edges = edges[np.where(de_labels==1)[0],:]
 
     out = input.copy()
 
@@ -162,6 +159,7 @@ def grow_regions(job_id, config_path):
     with vu.file_reader(output_path,'w') as f:
         ds = f.require_dataset(output_key, dtype='uint32', shape=out.shape, compression='gzip')
         ds[:] = out
+        ds.attrs['num_fluid_cavities'] = int((de_labels==0).reshape(-1).sum())
 
     fu.log_job_success(job_id)
 

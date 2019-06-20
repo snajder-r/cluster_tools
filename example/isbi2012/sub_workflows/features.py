@@ -8,8 +8,8 @@ import numpy as np
 import luigi
 import z5py
 
-from cluster_tools.features import EdgeFeaturesWorkflow
-from cluster_tools.features.block_edge_features import BlockEdgeFeaturesLocal
+from ...features import EdgeFeaturesWorkflow
+from ...features.block_edge_features import BlockEdgeFeaturesLocal
 
 NEAREST_OFFSETS = [[-1, 0, 0], [0, -1, 0], [0, 0, -1]]
 

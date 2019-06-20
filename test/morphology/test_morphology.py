@@ -9,10 +9,10 @@ import luigi
 import z5py
 
 try:
-    from cluster_tools.morphology import MorphologyWorkflow
+    from ...morphology import MorphologyWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.morphology import MorphologyWorkflow
+    from ...morphology import MorphologyWorkflow
 
 
 class TestMorphology(unittest.TestCase):

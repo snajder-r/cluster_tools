@@ -13,10 +13,10 @@ import nifty.graph.rag as nrag
 import nifty.distributed as ndist
 
 try:
-    from cluster_tools.lifted_features import LiftedFeaturesFromNodeLabelsWorkflow
+    from ...lifted_features import LiftedFeaturesFromNodeLabelsWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.lifted_features import LiftedFeaturesFromNodeLabelsWorkflow
+    from ...lifted_features import LiftedFeaturesFromNodeLabelsWorkflow
 
 
 class TestLiftedFeatureWorkflow(unittest.TestCase):

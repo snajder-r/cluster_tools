@@ -6,7 +6,7 @@ from shutil import rmtree
 
 import luigi
 import z5py
-from cluster_tools.downscaling import DownscalingWorkflow
+from ...downscaling import DownscalingWorkflow
 from cremi_tools.viewer.volumina import view
 
 

@@ -9,7 +9,7 @@ import luigi
 import z5py
 import h5py
 
-from cluster_tools.connected_components import ConnectedComponentsWorkflow
+from ...connected_components import ConnectedComponentsWorkflow
 from cremi_tools.viewer.volumina import view
 
 

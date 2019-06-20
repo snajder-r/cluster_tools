@@ -6,7 +6,7 @@ import nifty
 import nifty.distributed as ndist
 import nifty.graph.rag as nrag
 
-from cluster_tools.utils.segmentation_utils import multicut_kernighan_lin
+from ...utils.segmentation_utils import multicut_kernighan_lin
 from cremi_tools.viewer.volumina import view
 
 

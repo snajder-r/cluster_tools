@@ -7,8 +7,8 @@ import json
 import luigi
 import z5py
 
-from cluster_tools.watershed import WatershedWorkflow
-from cluster_tools.watershed.watershed import WatershedLocal
+from ...watershed import WatershedWorkflow
+from ...watershed.watershed import WatershedLocal
 
 
 def ws_example(shebang):

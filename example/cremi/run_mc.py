@@ -4,7 +4,7 @@ import os
 import json
 import luigi
 
-from cluster_tools import MulticutSegmentationWorkflow
+from .. import MulticutSegmentationWorkflow
 
 
 def run_mc(sample, tmp_folder, max_jobs,

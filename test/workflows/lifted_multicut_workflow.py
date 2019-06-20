@@ -13,10 +13,10 @@ import nifty.graph.rag as nrag
 import nifty.distributed as ndist
 
 try:
-    from cluster_tools import LiftedMulticutSegmentationWorkflow
+    from .. import LiftedMulticutSegmentationWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools import LiftedMulticutSegmentationWorkflow
+    from .. import LiftedMulticutSegmentationWorkflow
 
 
 class TestLiftedMulticutWorkflow(unittest.TestCase):

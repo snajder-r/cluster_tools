@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../..')
-from cluster_tools.connected_components import make_batch_jobs
+from ...connected_components import make_batch_jobs
 
 IN_PATH = './binary_volume.n5'
 IN_KEY = 'data'

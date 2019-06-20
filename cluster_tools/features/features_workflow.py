@@ -170,14 +170,10 @@ class EdgeFeaturesWorkflowWithRegionFeatures(WorkflowBase):
         region_feature_paths = []
         region_feature_keys = []
 
-        print(self.use_edge_features,"INPUT PATHS I GOT: ", self.input_paths)
-
         for i in range(len(self.input_paths)):
             input_path = self.input_paths[i]
             input_key = self.input_keys[i]
 
-            print(self.use_edge_features,"INPUT PATH: ", input_path)
-            print(self.use_edge_features,"INPUT KEY: ", input_key)
             if self.use_edge_features:
                 outfile = self.output_path
                 outkey = self.edge_features_input_key+'_ch'+str(i)
@@ -258,7 +254,6 @@ class EdgeFeaturesWorkflowWithRegionFeatures(WorkflowBase):
                     number_of_labels=self.number_of_labels,
                     blockwise=False)
        
-        print(self.use_edge_features,"MERGE ", region_feature_paths)
         dep = R2EFeaturesWorkflow(tmp_folder=self.tmp_folder, max_jobs=self.max_jobs,
                                    config_dir=self.config_dir, target=self.target,
                                    dependency=dep, graph_path=self.graph_path,

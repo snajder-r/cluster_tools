@@ -7,7 +7,7 @@ EXECUTABLE = '/groups/saalfeld/home/papec/Work/software/conda/miniconda3/envs/pr
 
 def make_cc_scripts(path, n_jobs, block_shape, tmp_dir):
     sys.path.append('../../..')
-    from cluster_tools.connected_components import make_batch_jobs
+    from ...connected_components import make_batch_jobs
     chunks = block_shape
     # chunks = block_shape
     make_batch_jobs(path, 'syncleft_dist_DTU-2_200000',

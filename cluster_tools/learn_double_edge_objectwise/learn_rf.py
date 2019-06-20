@@ -114,8 +114,10 @@ def learn_rf(job_id, config_path):
 
     feature_colnames = []
 
-    # TODO enable multiple feature paths
-    # NOTE we assert that keys of boyh dicts are identical in the main class
+    # We split the data into training and validation
+    # As a quick and dirty method to provide two separate datasets, simply
+    # tag images belonging to the validation set by putting "validation_"
+    # at the beginning of the key
     keys = []
     val_keys = []
     for key, feat_path in features_dict.items():
@@ -183,6 +185,11 @@ def learn_rf(job_id, config_path):
     best_error = 10000
     best_features = None
 
+    # To find the best combination of features, we test a number of combinations
+    # In order to save some time we skip every other number of features (so
+    # we try all single features, then all 3-feature combinations, then all 
+    # 5-feature combinations, etc). We assume that a single feature too much won't
+    # hurt...
     for num_features in range(1,len(unique_features)+1,2):
         for feature_selection in itertools.combinations(unique_features,num_features):
             for attempt in range(3):

@@ -12,12 +12,12 @@ import nifty.tools as nt
 import nifty.graph.rag as nrag
 
 try:
-    from cluster_tools.features import EdgeFeaturesWorkflow
-    from cluster_tools.cluster_tasks import BaseClusterTask
+    from ...features import EdgeFeaturesWorkflow
+    from ...cluster_tasks import BaseClusterTask
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.features import EdgeFeaturesWorkflow
-    from cluster_tools.cluster_tasks import BaseClusterTask
+    from ...features import EdgeFeaturesWorkflow
+    from ...cluster_tasks import BaseClusterTask
 
 
 class TestEdgeFeatures(unittest.TestCase):

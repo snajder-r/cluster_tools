@@ -6,8 +6,8 @@ import json
 
 import luigi
 
-from cluster_tools.multicut import MulticutWorkflow
-from cluster_tools.multicut.solve_subproblems import SolveSubproblemsLocal
+from ...multicut import MulticutWorkflow
+from ...multicut.solve_subproblems import SolveSubproblemsLocal
 
 
 def multicut_example(shebang):

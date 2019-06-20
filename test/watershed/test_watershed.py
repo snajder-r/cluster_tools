@@ -10,12 +10,12 @@ import luigi
 import z5py
 
 try:
-    from cluster_tools.watershed import WatershedWorkflow
-    from cluster_tools.watershed.watershed import WatershedLocal
+    from ...watershed import WatershedWorkflow
+    from ...watershed.watershed import WatershedLocal
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.watershed import WatershedWorkflow
-    from cluster_tools.watershed.watershed import WatershedLocal
+    from ...watershed import WatershedWorkflow
+    from ...watershed.watershed import WatershedLocal
 
 
 # TODO tests with mask

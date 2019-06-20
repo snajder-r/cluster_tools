@@ -28,6 +28,7 @@ from .stitching import StitchingAssignmentsWorkflow
 from .classifyrf import ClassificationWorkflow
 
 from .double_edges import DoubleEdgesWorkflow
+from .double_edges import remove_noise_objects as noise_tasks
 
 from .learn_double_edge_objectwise import merge_features as merge_tasks
 
@@ -277,15 +278,22 @@ class MulticutSegmentationWithDoubleEdgesWorkflow(SegmentationWorkflowBase):
     max_jobs_multicut = luigi.IntParameter(default=1)
     # number of scales
     n_scales = luigi.IntParameter()
+    # Temporary output file in which semantic object classification is stored
     double_edge_path = luigi.Parameter()
+    # Temporary output file in which input for object classification is stored
     de_problem_path = luigi.Parameter()
+    # Random forest for semantic object classification
     de_rf_path = luigi.Parameter()
+    # List of features to be computed for semantic object classification 
+    # (must match with the random forest model)
     de_region_features = luigi.ListParameter()
 
+    # Final output
     de_output_path = luigi.Parameter()
     de_output_key = luigi.Parameter()
 
     def _double_edge_prediction_task(self,dep):
+        # Computes graph on the multicut output
         dep = GraphWorkflow(tmp_folder=self.tmp_folder,
                             max_jobs=self.max_jobs,
                             config_dir=self.config_dir,
@@ -297,7 +305,20 @@ class MulticutSegmentationWithDoubleEdgesWorkflow(SegmentationWorkflowBase):
                             output_key='s0/graph',
                             ignore_label=0,
                             n_scales=1)
-        
+                            
+        # Postprocessing which removes disconnected components as well
+        # as some other improvements (like volume-based merging)
+        noise_task = getattr(noise_tasks, self._get_task_name('RemoveNoiseObjectsTask'))
+        dep = noise_task(tmp_folder=os.path.join(self.tmp_folder),
+                       config_dir=self.config_dir, max_jobs=self.max_jobs,
+                       input_path = self.output_path, input_key = self.output_key,
+                       graph_path =self.de_problem_path, graph_key = 's0/graph',
+                       output_graph_path = self.de_problem_path, output_graph_key = 's0/graph_cleaned',
+                       output_path=self.output_path, output_key='labels_cleaned',
+                       dependency=dep)                            
+                            
+        # Compute region features on postprocessed segmentation based on 
+        # membrane channel
         dep = RegionFeaturesWorkflow(tmp_folder=self.tmp_folder,
                        max_jobs=self.max_jobs,
                        config_dir=self.config_dir,
@@ -306,13 +327,14 @@ class MulticutSegmentationWithDoubleEdgesWorkflow(SegmentationWorkflowBase):
                        input_path=self.img_paths[0],
                        input_key=self.img_keys[0],
                        labels_path=self.output_path,
-                       labels_key=self.output_key,
+                       labels_key='labels_cleaned',
                        output_path=self.de_problem_path,
                        output_key='features_membranes',
                        feature_list=self.de_region_features,
                        number_of_labels=-1,
                        blockwise=False)
-
+        # Compute region features on postprocessed segmentation based on 
+        # nuclei channel
         dep =RegionFeaturesWorkflow(tmp_folder=self.tmp_folder,
                        max_jobs=self.max_jobs,
                        config_dir=self.config_dir,
@@ -321,13 +343,15 @@ class MulticutSegmentationWithDoubleEdgesWorkflow(SegmentationWorkflowBase):
                        input_path=self.img_paths[1],
                        input_key=self.img_keys[1],
                        labels_path=self.output_path,
-                       labels_key=self.output_key,
+                       labels_key='labels_cleaned',
                        output_path=self.de_problem_path,
                        output_key='features_nuclei',
                        feature_list=self.de_region_features,
                        number_of_labels=-1,
                        blockwise=False)
 
+        # Compute region features on postprocessed segmentation based on 
+        # membrane prediction
         dep = RegionFeaturesWorkflow(tmp_folder=self.tmp_folder,
                        max_jobs=self.max_jobs,
                        config_dir=self.config_dir,
@@ -336,13 +360,14 @@ class MulticutSegmentationWithDoubleEdgesWorkflow(SegmentationWorkflowBase):
                        input_path=self.input_path,
                        input_key=self.input_key,
                        labels_path=self.output_path,
-                       labels_key=self.output_key,
+                       labels_key='labels_cleaned',
                        output_path=self.de_problem_path,
                        output_key='features_probs',
                        feature_list=self.de_region_features,
                        number_of_labels=-1,
                        blockwise=False)
 
+        # Merges region features from the 3 channels above
         mt = getattr(merge_tasks, self._get_task_name('MergeRegionFeatures'))
         dep = mt(tmp_folder=self.tmp_folder,
                         max_jobs=self.max_jobs,
@@ -353,6 +378,7 @@ class MulticutSegmentationWithDoubleEdgesWorkflow(SegmentationWorkflowBase):
                         feature_list=self.de_region_features,
                         output_key=self.features_key)
 
+        # Performs semantic object classification (fluid cavity/cell/background)
         dep = ClassificationWorkflow(tmp_folder=self.tmp_folder,
                                max_jobs=self.max_jobs_multicut,
                                config_dir=self.config_dir,
@@ -364,14 +390,16 @@ class MulticutSegmentationWithDoubleEdgesWorkflow(SegmentationWorkflowBase):
                                output_key='double_edges',
                                dependency=dep)
 
+        # Finds fluid-cavity to background edges and expands adjacent 
+        # cells to close the fluid cavity
         dep = DoubleEdgesWorkflow(tmp_folder=self.tmp_folder,
                                   max_jobs=self.max_jobs_multicut,
                                   config_dir=self.config_dir,
                                   target=self.target,
-                                  input_path=self.output_path, input_key=self.output_key, 
+                                  input_path=self.output_path, input_key='labels_cleaned', 
                                   de_labels_path=self.double_edge_path, de_labels_key='double_edges', 
                                   boundaries_path=self.img_paths[0], boundaries_key=self.img_keys[0], 
-                                  graph_path=self.de_problem_path, graph_key='s0/graph', 
+                                  graph_path=self.de_problem_path, graph_key='s0/graph_cleaned', 
                                   output_path=self.de_output_path, output_key=self.de_output_key, 
                                   dependency=dep)
         return dep

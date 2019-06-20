@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../..')
-from cluster_tools.masked_watershed import make_batch_jobs
+from ...masked_watershed import make_batch_jobs
 
 PATH = '/groups/saalfeld/home/papec/Work/neurodata_hdd/cluster_test_data/testdata.n5'
 AFF_KEY = 'full_affs'

@@ -7,7 +7,7 @@ import z5py
 import luigi
 import nifty.tools as nt
 import nifty.distributed as ndist
-from cluster_tools.paintera import ConversionWorkflow
+from ...paintera import ConversionWorkflow
 
 
 def to_paintera_format():

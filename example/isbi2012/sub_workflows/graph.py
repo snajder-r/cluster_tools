@@ -8,8 +8,8 @@ import luigi
 import h5py
 import z5py
 
-from cluster_tools.graph import GraphWorkflow
-from cluster_tools.watershed.watershed import WatershedLocal
+from ...graph import GraphWorkflow
+from ...watershed.watershed import WatershedLocal
 
 
 def graph_example(shebang):

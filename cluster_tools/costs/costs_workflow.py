@@ -18,7 +18,6 @@ class EdgeCostsWorkflow(WorkflowBase):
     edge_classes = luigi.ListParameter(default=[1])
 
     def _costs_with_rf(self):
-        print("PREDICTING USING RF")
         predict_task = getattr(predict_tasks,
                                self._get_task_name('Predict'))
         t1 = predict_task(tmp_folder=self.tmp_folder,
@@ -48,7 +47,6 @@ class EdgeCostsWorkflow(WorkflowBase):
         return t2
 
     def _costs(self):
-        print("NO RF :-(")
         transform_task = getattr(transform_tasks,
                                  self._get_task_name('ProbsToCosts'))
         t1 = transform_task(tmp_folder=self.tmp_folder,

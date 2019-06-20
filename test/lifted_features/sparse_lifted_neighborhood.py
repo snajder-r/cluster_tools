@@ -12,14 +12,14 @@ import nifty.distributed as ndist
 import nifty.graph.opt.lifted_multicut as nlmc
 
 try:
-    from cluster_tools.lifted_features.sparse_lifted_neighborhood import SparseLiftedNeighborhoodLocal
-    from cluster_tools.node_labels import NodeLabelWorkflow
-    from cluster_tools.graph import GraphWorkflow
+    from ...lifted_features.sparse_lifted_neighborhood import SparseLiftedNeighborhoodLocal
+    from ...node_labels import NodeLabelWorkflow
+    from ...graph import GraphWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.lifted_features.sparse_lifted_neighborhood import SparseLiftedNeighborhoodLocal
-    from cluster_tools.node_labels import NodeLabelWorkflow
-    from cluster_tools.graph import GraphWorkflow
+    from ...lifted_features.sparse_lifted_neighborhood import SparseLiftedNeighborhoodLocal
+    from ...node_labels import NodeLabelWorkflow
+    from ...graph import GraphWorkflow
 
 
 class TestNHWorkflow(unittest.TestCase):

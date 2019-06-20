@@ -11,10 +11,10 @@ import vigra
 import nifty.tools as nt
 
 try:
-    from cluster_tools.features import RegionFeaturesWorkflow
+    from ...features import RegionFeaturesWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.features import RegionFeaturesWorkflow
+    from ...features import RegionFeaturesWorkflow
 
 
 class TestEdgeFeatures(unittest.TestCase):

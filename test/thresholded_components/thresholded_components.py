@@ -13,10 +13,10 @@ import z5py
 import nifty.tools as nt
 
 try:
-    from cluster_tools.thresholded_components import ThresholdedComponentsWorkflow
+    from ...thresholded_components import ThresholdedComponentsWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.thresholded_components import ThresholdedComponentsWorkflow
+    from ...thresholded_components import ThresholdedComponentsWorkflow
 
 
 class TestThresholdedComponents(unittest.TestCase):
@@ -101,8 +101,8 @@ class TestThresholdedComponents(unittest.TestCase):
 
     @unittest.skip
     def _test_first_stage(self):
-        from cluster_tools.thresholded_components.block_components import BlockComponentsLocal
-        from cluster_tools.utils.task_utils import DummyTask
+        from ...thresholded_components.block_components import BlockComponentsLocal
+        from ...utils.task_utils import DummyTask
         task = BlockComponentsLocal(tmp_folder=self.tmp_folder,
                                     config_dir=self.config_folder,
                                     max_jobs=8,
@@ -118,9 +118,9 @@ class TestThresholdedComponents(unittest.TestCase):
 
     @unittest.skip
     def _test_second_stage(self):
-        from cluster_tools.thresholded_components.block_components import BlockComponentsLocal
-        from cluster_tools.thresholded_components.merge_offsets import MergeOffsetsLocal
-        from cluster_tools.utils.task_utils import DummyTask
+        from ...thresholded_components.block_components import BlockComponentsLocal
+        from ...thresholded_components.merge_offsets import MergeOffsetsLocal
+        from ...utils.task_utils import DummyTask
         task1 = BlockComponentsLocal(tmp_folder=self.tmp_folder,
                                      config_dir=self.config_folder,
                                      max_jobs=8,

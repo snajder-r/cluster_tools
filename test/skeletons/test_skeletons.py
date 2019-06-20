@@ -11,12 +11,12 @@ from skimage.morphology import skeletonize_3d
 from skan import csr
 
 try:
-    from cluster_tools.skeletons import SkeletonWorkflow
-    from cluster_tools.utils import skeleton_utils as su
+    from ...skeletons import SkeletonWorkflow
+    from ...utils import skeleton_utils as su
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.skeletons import SkeletonWorkflow
-    from cluster_tools.utils import skeleton_utils as su
+    from ...skeletons import SkeletonWorkflow
+    from ...utils import skeleton_utils as su
 
 
 class TestSkeletons(unittest.TestCase):

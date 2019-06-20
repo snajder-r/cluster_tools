@@ -8,10 +8,10 @@ import nifty.graph.opt.multicut as nmc
 import numpy as np
 
 try:
-    import cluster_tools
+    from .. import
 except ImportError:
     sys.path.append('../..')
-    import cluster_tools
+    from .. import
 
 
 class TestSegmentationUtil(unittest.TestCase):
@@ -69,29 +69,29 @@ class TestSegmentationUtil(unittest.TestCase):
         return energy
 
     def test_mc_kl(self):
-        from cluster_tools.utils.segmentation_utils import multicut_kernighan_lin
+        from ...utils.segmentation_utils import multicut_kernighan_lin
         graph, costs = self.load_problem(self.path)
         node_labels = multicut_kernighan_lin(graph, costs)
         energy = self._check_result(graph, costs, node_labels)
         print("kernighan-lin:", energy)
 
     def test_mc_gaec(self):
-        from cluster_tools.utils.segmentation_utils import multicut_gaec
+        from ...utils.segmentation_utils import multicut_gaec
         graph, costs = self.load_problem(self.path)
         node_labels = multicut_gaec(graph, costs)
         energy = self._check_result(graph, costs, node_labels)
         print("gaec:", energy)
 
     def test_mc_decompose(self):
-        from cluster_tools.utils.segmentation_utils import multicut_decomposition
+        from ...utils.segmentation_utils import multicut_decomposition
         graph, costs = self.load_problem(self.path)
         node_labels = multicut_decomposition(graph, costs)
         energy = self._check_result(graph, costs, node_labels)
         print("decomposition:", energy)
 
     def test_decompose_toy(self):
-        from cluster_tools.utils.segmentation_utils import multicut_decomposition
-        from cluster_tools.utils.segmentation_utils import multicut_kernighan_lin
+        from ...utils.segmentation_utils import multicut_decomposition
+        from ...utils.segmentation_utils import multicut_kernighan_lin
         graph, costs = self.toy_problem()
         # node_labels = multicut_decomposition(graph, costs)
         node_labels = multicut_kernighan_lin(graph, costs)

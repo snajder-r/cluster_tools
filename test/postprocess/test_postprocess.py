@@ -12,12 +12,12 @@ import nifty.distributed as ndist
 import nifty.tools as nt
 
 try:
-    from cluster_tools.postprocess import SizeFilterWorkflow
-    from cluster_tools.postprocess import FilterLabelsWorkflow
+    from ...postprocess import SizeFilterWorkflow
+    from ...postprocess import FilterLabelsWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.postprocess import SizeFilterWorkflow
-    from cluster_tools.postprocess import FilterLabelsWorkflow
+    from ...postprocess import SizeFilterWorkflow
+    from ...postprocess import FilterLabelsWorkflow
 
 
 class TestPostprocess(unittest.TestCase):

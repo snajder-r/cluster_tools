@@ -361,7 +361,9 @@ class BaseClusterTask(luigi.Task):
     def _replace_shebang(file_path, shebang):
         for i, line in enumerate(fileinput.input(file_path, inplace=True)):
             if i == 0:
-                print(shebang, end='')
+                print(shebang, end='\n')
+                print('import os,sys', end='\n')
+                print('sys.path.append(os.path.abspath(\'./cluster_tools/\'))', end='\n')
             else:
                 print(line, end='')
 

@@ -6,8 +6,8 @@ import json
 
 import luigi
 
-from cluster_tools.costs import EdgeCostsWorkflow
-from cluster_tools.costs.probs_to_costs import ProbsToCostsLocal
+from ...costs import EdgeCostsWorkflow
+from ...costs.probs_to_costs import ProbsToCostsLocal
 
 
 def features_example(shebang):

@@ -14,9 +14,9 @@ import nifty.distributed as ndist
 import nifty.ufd as nufd
 import nifty.tools as nt
 
-from cluster_tools import MulticutSegmentationWorkflow
-from cluster_tools.utils.volume_utils import InterpolatedVolume
-from cluster_tools.utils.segmentation_utils import multicut_gaec
+from .. import MulticutSegmentationWorkflow
+from ...utils.volume_utils import InterpolatedVolume
+from ...utils.segmentation_utils import multicut_gaec
 
 
 def run_wf(block_id, tmp_folder, max_jobs,

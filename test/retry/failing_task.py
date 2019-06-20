@@ -7,9 +7,9 @@ import json
 import luigi
 import nifty.tools as nt
 
-import cluster_tools.utils.volume_utils as vu
-import cluster_tools.utils.function_utils as fu
-from cluster_tools.cluster_tasks import LocalTask
+from .. import.utils.volume_utils as vu
+from .. import.utils.function_utils as fu
+from ...cluster_tasks import LocalTask
 
 
 #

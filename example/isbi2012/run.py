@@ -8,8 +8,8 @@ import luigi
 import h5py
 import z5py
 
-from cluster_tools import MulticutSegmentationWorkflow
-from cluster_tools.multicut import SubSolutionsWorkflow
+from .. import MulticutSegmentationWorkflow
+from ...multicut import SubSolutionsWorkflow
 
 
 def run(shebang, with_rf=False):

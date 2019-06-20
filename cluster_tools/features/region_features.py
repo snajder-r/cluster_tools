@@ -150,7 +150,6 @@ def _block_features(block_id, blocking,
     # work with uint64s ...
     
     labels = labels.astype('uint32')
-    #print(vigra.analysis.supportedFeatures(input_))
     feats = vigra.analysis.extractRegionFeatures(input_, labels, features=feature_list,
                                                  ignoreLabel=ignore_label)
     # make serialization
@@ -234,7 +233,6 @@ def region_features(job_id, config_path):
 
         shape = ds_out.shape
         
-        print('Block shape ', block_shape)
         blocking = nt.blocking([0, 0, 0], shape, block_shape)
 
         for block_id in block_list:

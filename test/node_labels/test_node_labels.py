@@ -12,10 +12,10 @@ import nifty.distributed as ndist
 import nifty.tools as nt
 
 try:
-    from cluster_tools.node_labels import NodeLabelWorkflow
+    from ...node_labels import NodeLabelWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.node_labels import NodeLabelWorkflow
+    from ...node_labels import NodeLabelWorkflow
 
 
 class TestNodeLabels(unittest.TestCase):

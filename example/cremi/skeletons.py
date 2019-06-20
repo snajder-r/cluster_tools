@@ -7,7 +7,7 @@ from shutil import rmtree
 import numpy as np
 import luigi
 import z5py
-from cluster_tools.skeletons import SkeletonWorkflow
+from ...skeletons import SkeletonWorkflow
 from cremi_tools.viewer.volumina import view
 
 

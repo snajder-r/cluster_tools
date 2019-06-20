@@ -8,7 +8,7 @@ import luigi
 import h5py
 import z5py
 
-from cluster_tools.watershed import WatershedWorkflow
+from ...watershed import WatershedWorkflow
 
 
 def run_ws(block_id, max_jobs,

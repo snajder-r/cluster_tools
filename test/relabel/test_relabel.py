@@ -8,7 +8,7 @@ import vigra
 import luigi
 import z5py
 
-from cluster_tools.relabel import RelabelWorkflow
+from ...relabel import RelabelWorkflow
 
 
 class TestRelabel(unittest.TestCase):

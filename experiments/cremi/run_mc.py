@@ -8,7 +8,7 @@ import numpy as np
 import luigi
 import z5py
 
-from cluster_tools import MulticutSegmentationWorkflow
+from .. import MulticutSegmentationWorkflow
 
 
 def run_wf(sample, max_jobs, target='local'):

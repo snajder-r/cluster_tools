@@ -7,7 +7,7 @@ import json
 import luigi
 import z5py
 
-from cluster_tools import LearningWorkflow
+from .. import LearningWorkflow
 
 
 def learn_rf():

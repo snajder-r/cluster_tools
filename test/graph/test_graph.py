@@ -13,10 +13,10 @@ import nifty.graph.rag as nrag
 import nifty.distributed as ndist
 
 try:
-    from cluster_tools.graph import GraphWorkflow
+    from ...graph import GraphWorkflow
 except ImportError:
     sys.path.append('../..')
-    from cluster_tools.graph import GraphWorkflow
+    from ...graph import GraphWorkflow
 
 
 class TestGraph(unittest.TestCase):

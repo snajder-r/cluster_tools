@@ -4,10 +4,10 @@ import unittest
 from shutil import rmtree
 
 try:
-    import cluster_tools
+    from .. import
 except ImportError:
     sys.path.append('../..')
-    import cluster_tools
+    from .. import
 
 
 class TestFunctionUtils(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestFunctionUtils(unittest.TestCase):
             pass
 
     def test_tail(self):
-        from cluster_tools.utils.function_utils import tail
+        from ...utils.function_utils import tail
         l1 = 'abcd'
         l2 = '1234'
         l3 = '5678'

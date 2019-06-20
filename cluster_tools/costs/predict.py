@@ -142,8 +142,8 @@ def predict(job_id, config_path):
     feat_roi = np.s_[edge_begin:edge_end, :]
     with vu.file_reader(features_path) as f:
         ds = f[features_key]
-        print("Features: ")
-        print(ds.attrs['feature_colnames'])
+        fu.log("Features: ")
+        fu.log(ds.attrs['feature_colnames'])
         ds.n_threads = n_threads
         feats = ds[feat_roi]
 

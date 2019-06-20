@@ -7,7 +7,7 @@ EXECUTABLE = '/groups/saalfeld/home/papec/Work/software/conda/miniconda3/envs/pr
 
 def make_minfilter_scripts(path, n_jobs, chunks, filter_shape, block_shape):
     sys.path.append('../../..')
-    from cluster_tools.minfilter import make_batch_jobs
+    from ...minfilter import make_batch_jobs
     make_batch_jobs(path, 'masks/initial_mask',
                     path, 'masks/minfilter_mask',
                     chunks, filter_shape,
@@ -21,7 +21,7 @@ def make_minfilter_scripts(path, n_jobs, chunks, filter_shape, block_shape):
 
 # def make_ws_scripts(path, n_jobs, block_shape, tmp_dir):
 #     sys.path.append('../../..')
-#     from cluster_tools.masked_watershed import make_batch_jobs
+#     from ...masked_watershed import make_batch_jobs
 #     chunks = [bs // 2 for bs in block_shape]
 #     # chunks = block_shape
 #     make_batch_jobs(path, 'predictions/affs_glia',
@@ -35,7 +35,7 @@ def make_minfilter_scripts(path, n_jobs, chunks, filter_shape, block_shape):
 
 
 def make_ws_scripts(path, n_jobs, block_shape, tmp_dir):
-    from cluster_tools.dt_components import make_batch_jobs
+    from ...dt_components import make_batch_jobs
     make_batch_jobs(path,
                     aff_key='predictions/affs_glia',
                     out_key='segmentations/dt_components',
@@ -52,7 +52,7 @@ def make_ws_scripts(path, n_jobs, block_shape, tmp_dir):
 
 def make_relabel_scripts(path, n_jobs, block_shape, tmp_dir):
     sys.path.append('../../..')
-    from cluster_tools.relabel import make_batch_jobs
+    from ...relabel import make_batch_jobs
     make_batch_jobs(path, 'segmentations/watershed2',
                     os.path.join(tmp_dir, 'tmp_files', 'tmp_relabel'),
                     block_shape, n_jobs,
@@ -63,7 +63,7 @@ def make_relabel_scripts(path, n_jobs, block_shape, tmp_dir):
 
 def make_graph_scripts(path, n_scales, n_jobs, n_threads, block_shape, tmp_dir):
     sys.path.append('../../..')
-    from cluster_tools.graph import make_batch_jobs
+    from ...graph import make_batch_jobs
     make_batch_jobs(path, 'segmentations/watershed2',
                     os.path.join(tmp_dir, 'tmp_files', 'graph.n5'),
                     os.path.join(tmp_dir, 'tmp_files', 'tmp_graph'),
@@ -77,7 +77,7 @@ def make_graph_scripts(path, n_scales, n_jobs, n_threads, block_shape, tmp_dir):
 
 def make_feature_scripts(path, n_jobs1, n_jobs2, n_threads, block_shape, tmp_dir):
     sys.path.append('../../..')
-    from cluster_tools.features import make_batch_jobs
+    from ...features import make_batch_jobs
     make_batch_jobs(os.path.join(tmp_dir, 'tmp_files', 'graph.n5'), 'graph',
                     os.path.join(tmp_dir, 'tmp_files', 'features.n5'), 'features',
                     path, 'predictions/affs_glia',
@@ -93,7 +93,7 @@ def make_feature_scripts(path, n_jobs1, n_jobs2, n_threads, block_shape, tmp_dir
 
 def make_cost_scripts(path, n_jobs, n_threads, tmp_dir, rf_path):
     sys.path.append('../../..')
-    from cluster_tools.costs import make_batch_jobs
+    from ...costs import make_batch_jobs
     make_batch_jobs(os.path.join(tmp_dir, 'tmp_files', 'features.n5'), 'features',
                     os.path.join(tmp_dir, 'tmp_files', 'graph.n5'), 'graph',
                     rf_path,
@@ -108,7 +108,7 @@ def make_cost_scripts(path, n_jobs, n_threads, tmp_dir, rf_path):
 
 def make_multicut_scripts(path, n_scales, n_jobs, n_threads, block_shape, tmp_dir, res_key):
     sys.path.append('../../..')
-    from cluster_tools.multicut import make_batch_jobs
+    from ...multicut import make_batch_jobs
     make_batch_jobs(os.path.join(tmp_dir, 'tmp_files', 'graph.n5'), 'graph',
                     os.path.join(tmp_dir, 'tmp_files', 'costs.n5'), 'costs',
                     path, 'node_labelings/%s' % res_key,
@@ -123,7 +123,7 @@ def make_multicut_scripts(path, n_scales, n_jobs, n_threads, block_shape, tmp_di
 
 def make_projection_scripts(path, n_jobs, block_shape, tmp_dir, res_key):
     sys.path.append('../../..')
-    from cluster_tools.label_projection import make_batch_jobs
+    from ...label_projection import make_batch_jobs
     chunks = [bs // 2 for bs in block_shape]
     # chunks = block_shape
     make_batch_jobs(path, 'segmentations/watershed2',
